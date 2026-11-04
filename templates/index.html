@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Your tasks</h1>
+
+<section class="stats" aria-label="Task summary">
+    <div class="stats-numbers">
+        <div class="stat">
+            <span class="stat-value">{{ stats.total }}</span>
+            <span class="stat-label">Total tasks</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value stat-done">{{ stats.completed }}</span>
+            <span class="stat-label">Completed</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value stat-pending">{{ stats.pending }}</span>
+            <span class="stat-label">Pending</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value stat-overdue">{{ stats.overdue }}</span>
+            <span class="stat-label">Overdue</span>
+        </div>
+    </div>
+    <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent_done }}" aria-label="Tasks completed">
+        <div class="progress-bar" style="width: {{ percent_done }}%"></div>
+    </div>
+    <p class="progress-text">{{ percent_done }}% of your tasks are done</p>
+</section>
+
+<section class="toolbar" aria-label="Filter and search">
+    <div class="segmented" role="group" aria-label="Filter by status">
+        {% for key, label in [('all', 'All'), ('pending', 'Pending'), ('completed', 'Completed')] %}
+            <a href="{{ url_for('index', filter=key, q=search or None) }}"
+               class="{{ 'selected' if status == key }}"
+               {% if status == key %}aria-current="true"{% endif %}>{{ label }}</a>
+        {% endfor %}
+    </div>
+
+    <form class="search" method="get" action="{{ url_for('index') }}" role="search">
+        <input type="hidden" name="filter" value="{{ status }}">
+        <label class="sr-only" for="q">Search tasks by title</label>
+        <input type="search" id="q" name="q" value="{{ search }}" placeholder="Search by title">
+        <button type="submit" class="btn btn-secondary">Search</button>
+        {% if search %}
+            <a class="btn btn-ghost" href="{{ url_for('index', filter=status) }}">Clear</a>
+        {% endif %}
+    </form>
+</section>
+
+{% if tasks %}
+    <ul class="task-list">
+        {% for task in tasks %}
+        <li class="task priority-{{ task.priority|lower }} {{ 'is-completed' if task.completed }} {{ 'is-overdue' if task.is_overdue }}">
+            <form method="post" action="{{ url_for('toggle_task', task_id=task.id) }}">
+                <button type="submit" class="check" aria-label="{{ 'Mark as pending' if task.completed else 'Mark as completed' }}: {{ task.title }}"
+                        title="{{ 'Mark as pending' if task.completed else 'Mark as completed' }}">
+                    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+            </form>
+
+            <div class="task-body">
+                <h2 class="task-title">{{ task.title }}</h2>
+                {% if task.description %}<p class="task-desc">{{ task.description }}</p>{% endif %}
+                <div class="task-meta">
+                    <span class="badge badge-{{ task.priority|lower }}">{{ task.priority }} priority</span>
+                    <span class="badge {{ 'badge-done' if task.completed else 'badge-pending' }}">{{ 'Completed' if task.completed else 'Pending' }}</span>
+                    <span class="due {{ 'due-overdue' if task.is_overdue }}">{{ task.due_label }}</span>
+                </div>
+            </div>
+
+            <div class="task-actions">
+                <a class="btn btn-secondary btn-small" href="{{ url_for('edit_task', task_id=task.id) }}">Edit</a>
+                <form method="post" action="{{ url_for('delete_task', task_id=task.id) }}" data-confirm="Delete “{{ task.title }}”? This cannot be undone.">
+                    <button type="submit" class="btn btn-danger btn-small">Delete</button>
+                </form>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <div class="empty">
+        {% if search %}
+            <h2>No tasks match “{{ search }}”</h2>
+            <p>Check the spelling or clear the search to see all tasks.</p>
+        {% elif status != 'all' %}
+            <h2>No {{ status }} tasks</h2>
+            <p>Switch to “All” to see every task.</p>
+        {% else %}
+            <h2>You have no tasks yet</h2>
+            <p>Add your first task to get started.</p>
+            <a class="btn btn-primary" href="{{ url_for('add_task') }}">Add a task</a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit task' if task else 'New task' }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ 'Edit task' if task else 'New task' }}</h1>
+
+<form class="card form" method="post" novalidate>
+    <div class="field">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" maxlength="100" required autofocus
+               value="{{ form.title }}" placeholder="What needs to be done?">
+    </div>
+
+    <div class="field">
+        <label for="description">Description <span class="optional">optional</span></label>
+        <textarea id="description" name="description" rows="4" maxlength="500"
+                  placeholder="Add any details you want to remember">{{ form.description }}</textarea>
+        <span class="counter" data-counter-for="description" data-max="500"></span>
+    </div>
+
+    <div class="field-row">
+        <div class="field">
+            <label for="priority">Priority</label>
+            <select id="priority" name="priority">
+                {% for level in priorities %}
+                    <option value="{{ level }}" {{ 'selected' if form.priority == level }}>{{ level }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="due_date">Due date <span class="optional">optional</span></label>
+            <input type="date" id="due_date" name="due_date" value="{{ form.due_date }}">
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{{ 'Save changes' if task else 'Add task' }}</button>
+        <a class="btn btn-ghost" href="{{ url_for('index') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}
